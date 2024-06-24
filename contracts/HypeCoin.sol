@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract HypeCoin is ERC20, Ownable, ReentrancyGuard {
+    error NoETHToClaim();
+    error ErrorWhileClaiming();
     uint256 public constant COIN_PRICE = 10 ** 16; // 1 HC = 0.01  ETH
 
     /**
@@ -37,11 +39,11 @@ contract HypeCoin is ERC20, Ownable, ReentrancyGuard {
      * For saving gas, I used call function and reentrancy guard for sending ETH to Owner.
      */
     function claim() external onlyOwner nonReentrant {
-        if (address(this).balance == 0) revert("No ETH to claim");
+        if (address(this).balance == 0) revert NoETHToClaim();
         uint256 value = address(this).balance;
         // payable(owner()).transfer(value);
         (bool result, ) = payable(owner()).call{value: value}("");
-        if (result == false) revert("Error while claiming");
+        if (result == false) revert ErrorWhileClaiming();
     }
 
     receive() external payable {}

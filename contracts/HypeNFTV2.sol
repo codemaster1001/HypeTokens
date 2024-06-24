@@ -8,6 +8,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract HypeNFTV2 is ERC721Enumerable, Ownable, ReentrancyGuard {
+    error AmountIsZero();
+    error InsufficientETH();
+    error InsufficientHypeCoins();
+    error ErrorWhileTransfering();
+    error AllowanceTooLow();
+
     IERC20 public hypeCoin;
     uint256 public nextTokenId;
     uint256 public constant nftPrice = 0.1 ether; // 1 HypeNFT = 0.1 ETH
@@ -30,9 +36,9 @@ contract HypeNFTV2 is ERC721Enumerable, Ownable, ReentrancyGuard {
      * @param _amount an amount of ETH to mint HypeNFT (1 HypeNFT = 0.1 ETH)
      */
     function mint(uint256 _amount) external payable nonReentrant {
-        if (_amount == 0) revert("Insufficient amount");
+        if (_amount == 0) revert AmountIsZero();
         uint256 requiredETH = _amount * nftPrice;
-        if (msg.value < requiredETH) revert("Insufficient ETH to mint NFT");
+        if (msg.value < requiredETH) revert InsufficientETH();
 
         uint256 tempNextTokenId = nextTokenId;
         nextTokenId += _amount;
@@ -45,12 +51,12 @@ contract HypeNFTV2 is ERC721Enumerable, Ownable, ReentrancyGuard {
             }
         }
         (bool result1, ) = payable(owner()).call{value: msg.value}("");
-        if (result1 == false) revert("Error while transfering");
+        if (result1 == false) revert ErrorWhileTransfering();
         if (msg.value > requiredETH) {
             (bool result2, ) = payable(msg.sender).call{
                 value: (msg.value - requiredETH)
             }("");
-            if (result2 == false) revert("Error while transfering");
+            if (result2 == false) revert ErrorWhileTransfering();
         }
     }
 
@@ -88,7 +94,7 @@ contract HypeNFTV2 is ERC721Enumerable, Ownable, ReentrancyGuard {
      */
     function mintWithHypeCoin(uint256 _tokenAmount) external {
         uint256 _nftPrice = 5 * 10 ** 18;
-        if (_tokenAmount < _nftPrice) revert("Insufficient amount to mint NFT");
+        if (_tokenAmount < _nftPrice) revert InsufficientHypeCoins();
 
         uint256 remainder = _tokenAmount % _nftPrice;
         uint256 nftCount = (_tokenAmount - remainder) / _nftPrice;
@@ -96,8 +102,8 @@ contract HypeNFTV2 is ERC721Enumerable, Ownable, ReentrancyGuard {
 
         uint256 balance = hypeCoin.balanceOf(msg.sender);
         uint256 allowance = hypeCoin.allowance(msg.sender, address(this));
-        if (balance < requiredTokenAmount) revert("Insufficient token balance");
-        if (allowance < requiredTokenAmount) revert("Allowance too low");
+        if (balance < requiredTokenAmount) revert InsufficientHypeCoins();
+        if (allowance < requiredTokenAmount) revert AllowanceTooLow();
 
         if (
             hypeCoin.transferFrom(
@@ -105,7 +111,7 @@ contract HypeNFTV2 is ERC721Enumerable, Ownable, ReentrancyGuard {
                 address(this),
                 requiredTokenAmount
             ) == false
-        ) revert("Error while transfering HypeCoin");
+        ) revert ErrorWhileTransfering();
         uint256 tempNextTokenId = nextTokenId;
         nextTokenId += nftCount;
         for (uint256 i = 0; i < nftCount; ) {

@@ -7,6 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract HypeNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
+    error AmountIsZero();
+    error InsufficientETH();
+    error ErrorWhileTransfering();
     uint256 public nextTokenId;
     uint256 public constant nftPrice = 10 ** 17; // 1 HypeNFT = 0.1 ETH
 
@@ -23,9 +26,9 @@ contract HypeNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
      * @param _amount an amount of ETH to mint HypeNFT (1 HypeNFT = 0.1 ETH)
      */
     function mint(uint256 _amount) external payable nonReentrant {
-        if (_amount == 0) revert();
+        if (_amount == 0) revert AmountIsZero();
         uint256 requiredETH = _amount * nftPrice;
-        if (msg.value < requiredETH) revert();
+        if (msg.value < requiredETH) revert InsufficientETH();
 
         uint256 tempNextTokenId = nextTokenId;
         nextTokenId += _amount;
@@ -38,12 +41,12 @@ contract HypeNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
         }
         // payable(owner()).transfer(msg.value);
         (bool result1, ) = payable(owner()).call{value: msg.value}("");
-        if (result1 == false) revert("Error while transfering");
+        if (result1 == false) revert ErrorWhileTransfering();
         if (msg.value > requiredETH) {
             (bool result2, ) = payable(msg.sender).call{
                 value: (msg.value - requiredETH)
             }("");
-            if (result2 == false) revert("Error while transfering");
+            if (result2 == false) revert ErrorWhileTransfering();
         }
         // payable(msg.sender).transfer(msg.value - requiredETH);
     }

@@ -26,7 +26,6 @@ describe("HypeNFT Contract", function () {
     }
     expect(await hypeNFT.nextTokenId()).to.equal(6);
     const tokens = await hypeNFT.tokensOwnedByAddr(otherAccount.address);
-    console.log(tokens);
     await expect(tokens[3]).to.equal(4);
   });
 

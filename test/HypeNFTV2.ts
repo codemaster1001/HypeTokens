@@ -7,9 +7,6 @@ describe("HypeNFTV2 Contract", function () {
   let hypeCoin: any;
   let owner: any, otherAccount: any;
   let totalSupply = hre.ethers.parseUnits("1000000", 18);
-  const mintPrice = hre.ethers.parseEther("0.1");
-  const amount = 5n;
-  const totalCost = mintPrice * amount;
   const ONE_MONTH_IN_SECS = 30 * 24 * 60 * 60;
 
   beforeEach(async function () {
@@ -27,8 +24,6 @@ describe("HypeNFTV2 Contract", function () {
   it("mint 2 HypeNFT with 10 HypeCoin and after 30 days, collect rewards.", async function () {
     const collectTime = (await time.latest()) + ONE_MONTH_IN_SECS + 1;
 
-    console.log(await hypeCoin.balanceOf(hypeCoin.target));
-
     await hypeCoin.connect(otherAccount).approve(hypeNFTV2.target, 10n ** 19n);
     expect(
       await hypeCoin.allowance(otherAccount.address, hypeNFTV2.target)
@@ -42,7 +37,6 @@ describe("HypeNFTV2 Contract", function () {
     expect(beforeBalance).to.equal(0);
     await hypeNFTV2.connect(otherAccount).collect();
     const afterBalance = await hypeCoin.balanceOf(otherAccount.address);
-    expect(afterBalance).to.equal(60n * 10n ** 18n);
-    console.log(afterBalance);
+    expect(afterBalance).to.equal(60n * 10n ** 18n); //after 30 days, user can earn 60 coins as rewards from 2 NFT.
   });
 });
